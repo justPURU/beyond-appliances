@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beyond Appliances Dashboard</title>
+  <meta name="description" content="Category performance dashboard for Amazon and Flipkart: GMV, units, ASP, TACOS and DRR, live-synced from Google Sheets." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b4bd6'/%3E%3Cpath d='M8 22V14M14 22V9M20 22v-6M26 22V12' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script>
+    try { const t = localStorage.getItem('ba-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#overview" aria-label="Beyond Appliances home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8"/><path d="M8 22V14M14 22V9M20 22v-6M26 22V12"/></svg>
+        </span>
+        <span class="brand-text">
+          <strong>Beyond Appliances</strong>
+          <small>Category performance · Amazon &amp; Flipkart</small>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#overview">Overview</a>
+        <a href="#mix">Mix &amp; spend</a>
+        <a href="#geo">Geography</a>
+        <a href="#products">Products</a>
+        <a href="#health">Data health <span class="nav-badge" id="health-badge" hidden></span></a>
+        <a href="#insights">Insights</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="source-pill" id="source-pill" type="button" title="Data source">
+          <span class="dot"></span><span id="source-text">Loading…</span>
+        </button>
+        <button class="icon-btn" id="refresh-btn" type="button" title="Refresh from sheet" aria-label="Refresh data">
+          <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>
+        </button>
+        <button class="icon-btn" id="theme-btn" type="button" title="Toggle theme" aria-label="Toggle dark mode">
+          <svg viewBox="0 0 24 24" class="i-moon"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg viewBox="0 0 24 24" class="i-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="filterbar" id="filterbar">
+    <div class="filterbar-inner">
+      <div class="f-group">
+        <label for="f-preset">Period</label>
+        <div class="f-date">
+          <select id="f-preset">
+            <option value="lastMonth">Last full month</option>
+            <option value="mtd">Month to date</option>
+            <option value="last7">Last 7 days</option>
+            <option value="last30">Last 30 days</option>
+            <option value="last90">Last 90 days</option>
+            <option value="qtd">Quarter to date</option>
+            <option value="fytd">FY to date (Apr–Mar)</option>
+            <option value="ytd">Calendar YTD</option>
+            <option value="all">All data</option>
+            <option value="custom">Custom range</option>
+          </select>
+          <input type="date" id="f-from" aria-label="From date" />
+          <span class="f-sep">–</span>
+          <input type="date" id="f-to" aria-label="To date" />
+        </div>
+      </div>
+      <div class="f-group">
+        <label>Platform</label>
+        <div class="seg" id="f-platform" role="group" aria-label="Platform"></div>
+      </div>
+      <div class="f-group"><label>Category</label><div class="ms" id="f-cat"></div></div>
+      <div class="f-group"><label>Sub-category</label><div class="ms" id="f-sub"></div></div>
+      <div class="f-group f-model"><label>Model</label><div class="ms" id="f-model"></div></div>
+      <button class="btn-ghost" id="f-reset" type="button">Reset</button>
+    </div>
+    <div class="compare-note" id="compare-note"></div>
+  </div>
+
+  <main class="page" id="page">
+    <div id="banners"></div>
+
+    <section id="overview" class="section">
+      <div class="kpi-grid" id="kpis"></div>
+      <div class="kpi-grid kpi-grid--secondary" id="kpis2"></div>
+
+      <article class="card">
+        <header class="card-head">
+          <div>
+            <h2 id="trend-title">Sales trend: this year vs last year</h2>
+            <p class="card-sub" id="trend-sub"></p>
+          </div>
+          <div class="card-tools">
+            <div class="seg seg--sm" id="trend-metric" role="group" aria-label="Trend metric"></div>
+            <div class="seg seg--sm" id="trend-gran" role="group" aria-label="Granularity"></div>
+            <button class="btn-link" data-table-toggle="trend" type="button">View data</button>
+          </div>
+        </header>
+        <div class="chart chart--lg" id="chart-trend"></div>
+        <div class="table-view" id="table-trend" hidden></div>
+      </article>
+    </section>
+
+    <section id="mix" class="section">
+      <h2 class="section-title">Mix &amp; spend efficiency</h2>
+      <div class="grid grid-3">
+        <article class="card">
+          <header class="card-head">
+            <div><h3>Platform contribution</h3><p class="card-sub">GMV share and trend by platform</p></div>
+            <button class="btn-link" data-table-toggle="platform" type="button">View data</button>
+          </header>
+          <div class="share-summary" id="platform-summary"></div>
+          <div class="chart" id="chart-platform"></div>
+          <div class="table-view" id="table-platform" hidden></div>
+        </article>
+        <article class="card">
+          <header class="card-head">
+            <div><h3>Category contribution</h3><p class="card-sub">GMV by category › sub-category</p></div>
+          </header>
+          <div id="category-list" class="barlist-wrap"></div>
+        </article>
+        <article class="card">
+          <header class="card-head">
+            <div><h3>Ad spend &amp; TACOS</h3><p class="card-sub">All spend types consolidated: SP + SB + Display + DSP</p></div>
+            <button class="btn-link" data-table-toggle="spend" type="button">View data</button>
+          </header>
+          <div class="share-summary" id="spend-summary"></div>
+          <div class="chart" id="chart-spend"></div>
+          <div class="table-view" id="table-spend" hidden></div>
+          <div id="spend-types"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="geo" class="section">
+      <h2 class="section-title">Geography &amp; audience</h2>
+      <div class="callout callout--info" id="geo-note"></div>
+      <div class="grid grid-3">
+        <article class="card">
+          <header class="card-head">
+            <div><h3>State view: both platforms</h3><p class="card-sub">Geo units by state. Flipkart rows with no state are shown, not dropped</p></div>
+          </header>
+          <div class="legend-inline" id="state-legend"></div>
+          <div id="state-list" class="barlist-wrap"></div>
+        </article>
+        <article class="card">
+          <header class="card-head">
+            <div><h3>City view: Amazon only</h3><p class="card-sub">Flipkart does not report city. It is not estimated</p></div>
+          </header>
+          <div id="city-list" class="barlist-wrap"></div>
+        </article>
+        <article class="card">
+          <header class="card-head">
+            <div><h3>Customer age bands</h3><p class="card-sub">Share of units by age band (monthly feed)</p></div>
+            <button class="btn-link" data-table-toggle="age" type="button">View data</button>
+          </header>
+          <div class="chart" id="chart-age"></div>
+          <div class="table-view" id="table-age" hidden></div>
+          <p class="footnote" id="age-note"></p>
+        </article>
+      </div>
+    </section>
+
+    <section id="products" class="section">
+      <article class="card">
+        <header class="card-head">
+          <div><h2>Model / SKU performance</h2><p class="card-sub" id="sku-sub">One row per physical model (ASIN ↔ FSN unified). Click a row to filter the dashboard to it.</p></div>
+          <div class="card-tools">
+            <input type="search" class="input" id="sku-search" placeholder="Search model, ASIN, FSN…" aria-label="Search models" />
+            <button class="btn-ghost" id="sku-export" type="button">Export CSV</button>
+          </div>
+        </header>
+        <div class="table-scroll"><table class="data-table" id="sku-table"></table></div>
+        <p class="footnote">TACOS per model = Sponsored Products spend on that model's ASIN/FSN + its GMV-weighted share of campaign-level spend (Brands, Display, DSP) for the same platform and month. <span class="badge badge--warn">No cost</span> means the SKU master has no cost rate, so the model is left out of margin. It is never shown as 0%.</p>
+      </article>
+    </section>
+
+    <section id="health" class="section">
+      <h2 class="section-title">Data health</h2>
+      <p class="section-sub">Every cleaning step and data gap found in the source sheets. The checks re-run on every sync, so appended rows are validated too.</p>
+      <div class="health-grid" id="health-grid"></div>
+      <details class="card details">
+        <summary>Date-format audit by sheet &amp; platform</summary>
+        <div class="table-scroll"><table class="data-table data-table--compact" id="date-audit"></table></div>
+      </details>
+      <details class="card details">
+        <summary>SKU mapping table (ASIN ↔ FSN)</summary>
+        <div class="table-scroll"><table class="data-table data-table--compact" id="sku-map"></table></div>
+      </details>
+    </section>
+
+    <section id="insights" class="section">
+      <h2 class="section-title">Insights for the Category Manager</h2>
+      <p class="section-sub">Written from data through 30 Sep 2026. The live numbers on the right of each card update with the sheet.</p>
+      <div class="insights" id="insights-list"></div>
+    </section>
+
+    <footer class="footer">
+      <span>Metric definitions: <b>GMV</b> gross order value · <b>Net</b> = GMV − returns/cancellations · <b>ASP</b> = GMV ÷ units · <b>DRR</b> = units ÷ days in period · <b>TACOS</b> = total ad spend (all types) ÷ GMV · <b>Gross margin</b> = (Net − cost rate × units) ÷ Net, on costed models only.</span>
+      <span id="footer-sync"></span>
+    </footer>
+  </main>
+
+  <div class="loading" id="loading"><div class="spinner"></div><p>Syncing with Google Sheets…</p></div>
+  <div class="tooltip-pop" id="pop" hidden></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/data.js"></script>
+  <script src="assets/insights.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
