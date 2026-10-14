@@ -210,8 +210,9 @@
   <div class="loading" id="loading"><div class="spinner"></div><p>Syncing with Google Sheets…</p></div>
   <div class="tooltip-pop" id="pop" hidden></div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.1/echarts.min.js"></script>
+  <!-- libraries are vendored locally so the page never depends on a CDN being reachable -->
+  <script src="assets/vendor/papaparse-5.4.1.min.js"></script>
+  <script src="assets/vendor/echarts-5.5.1.min.js"></script>
   <script src="assets/config.js"></script>
   <script src="assets/data.js"></script>
   <script src="assets/insights.js"></script>

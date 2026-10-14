@@ -239,6 +239,7 @@
 
   /* ---------- charts ---------- */
   function chart(id) {
+    if (!window.echarts) throw new Error('Chart library (ECharts) did not load. Check assets/vendor/ or the network.');
     const el = document.getElementById(id);
     if (!charts[id]) charts[id] = echarts.init(el, null, { renderer: 'svg' });
     return charts[id];
@@ -808,14 +809,24 @@
     renderFilters();
     const W = windows();
     const daily = buildDaily(allowedModels());
-    renderKpis(daily, W);
-    renderTrend(daily);
-    renderPlatform(W);
-    renderCategories(W);
-    renderSpend(daily, W);
-    renderGeo(W);
-    renderAge(W);
-    renderSku(W);
+    // each section renders independently so one failure can't blank the rest
+    const parts = [
+      ['kpis', () => renderKpis(daily, W)],
+      ['chart-trend', () => renderTrend(daily)],
+      ['chart-platform', () => renderPlatform(W)],
+      ['category-list', () => renderCategories(W)],
+      ['chart-spend', () => renderSpend(daily, W)],
+      ['state-list', () => renderGeo(W)],
+      ['chart-age', () => renderAge(W)],
+      ['sku-table', () => renderSku(W)],
+    ];
+    for (const [target, fn] of parts) {
+      try { fn(); } catch (e) {
+        console.error(`Render failed for #${target}:`, e);
+        const el = document.getElementById(target);
+        if (el) el.innerHTML = `<div class="callout callout--bad"><p><b>This section failed to render.</b> ${esc(e.message || e)}</p></div>`;
+      }
+    }
     for (const k of Object.keys(tables)) if (!$('#table-' + k).hidden) showTable(k);
   }
 
